@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Una carta de amor interactiva para celebrar nuestros primeros ocho meses juntos.">
   <meta name="theme-color" content="#050411">
-  <title> · Una carta para ti</title>
+  <title>Ocho meses · Una carta para ti</title>
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23d98a9e' d='M16 29S1 19.5 1 9.5C1 4.25 5.25 0 10.5 0 13.1 0 15.3 1.2 16 3.05 16.7 1.2 18.9 0 21.5 0 26.75 0 31 4.25 31 9.5 31 19.5 16 29 16 29Z'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css">
@@ -77,9 +77,31 @@
     <section id="letterScene" class="scene scene--letter" aria-label="Carta de amor" hidden>
 
       <div class="letter-toolbar">
-        <div class="story-counter" aria-label="8 meses de nuestra historia">
-          <span class="story-counter__number">8</span>
-          <span class="story-counter__text">meses de<br>nuestra historia</span>
+        <div class="story-counter" role="group" aria-labelledby="counterLabel">
+          <span class="story-counter__label" id="counterLabel">Tiempo contigo<span class="visually-hidden"> desde el 3 de marzo de 2026</span></span>
+
+          <div class="story-counter__units" role="timer" aria-live="off" aria-atomic="true">
+            <span class="story-counter__unit">
+              <span class="story-counter__value" id="countMonths">00</span>
+              <span class="story-counter__unit-label">meses</span>
+            </span>
+            <span class="story-counter__unit">
+              <span class="story-counter__value" id="countDays">00</span>
+              <span class="story-counter__unit-label">días</span>
+            </span>
+            <span class="story-counter__unit">
+              <span class="story-counter__value" id="countHours">00</span>
+              <span class="story-counter__unit-label">horas</span>
+            </span>
+            <span class="story-counter__unit">
+              <span class="story-counter__value" id="countMinutes">00</span>
+              <span class="story-counter__unit-label">minutos</span>
+            </span>
+            <span class="story-counter__unit">
+              <span class="story-counter__value" id="countSeconds">00</span>
+              <span class="story-counter__unit-label">segundos</span>
+            </span>
+          </div>
         </div>
 
         <button class="btn-glass js-close-letter" type="button" aria-label="Volver al sobre">

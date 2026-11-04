@@ -479,7 +479,86 @@
   });
 
   /* ======================================================================
-     3. REVELADO PROGRESIVO DE LA CARTA
+     3. CONTADOR DE TIEMPO
+     ====================================================================== */
+
+  const counterStart = new Date(2026, 2, 3, 0, 0, 0, 0);
+  const counterValues = {
+    months: document.getElementById("countMonths"),
+    days: document.getElementById("countDays"),
+    hours: document.getElementById("countHours"),
+    minutes: document.getElementById("countMinutes"),
+    seconds: document.getElementById("countSeconds")
+  };
+
+  function padCounter(value) {
+    return String(value).padStart(2, "0");
+  }
+
+  function addMonths(date, amount) {
+    const result = new Date(date.getTime());
+    const day = result.getDate();
+
+    result.setDate(1);
+    result.setMonth(result.getMonth() + amount);
+
+    const lastDay = new Date(
+      result.getFullYear(),
+      result.getMonth() + 1,
+      0
+    ).getDate();
+
+    result.setDate(Math.min(day, lastDay));
+    return result;
+  }
+
+  function calendarDaysBetween(from, to) {
+    const fromUTC = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+    const toUTC = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+
+    return Math.floor((toUTC - fromUTC) / 86400000);
+  }
+
+  function getElapsedTime(now) {
+    if (now <= counterStart) {
+      return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
+    }
+
+    let months =
+      (now.getFullYear() - counterStart.getFullYear()) * 12 +
+      (now.getMonth() - counterStart.getMonth());
+    let anchor = addMonths(counterStart, months);
+
+    if (anchor > now) {
+      months -= 1;
+      anchor = addMonths(counterStart, months);
+    }
+
+    return {
+      months: months,
+      days: calendarDaysBetween(anchor, now),
+      hours: now.getHours(),
+      minutes: now.getMinutes(),
+      seconds: now.getSeconds()
+    };
+  }
+
+  function updateCounter() {
+    const elapsed = getElapsedTime(new Date());
+
+    counterValues.months.textContent = padCounter(elapsed.months);
+    counterValues.days.textContent = padCounter(elapsed.days);
+    counterValues.hours.textContent = padCounter(elapsed.hours);
+    counterValues.minutes.textContent = padCounter(elapsed.minutes);
+    counterValues.seconds.textContent = padCounter(elapsed.seconds);
+  }
+
+  updateCounter();
+  window.setInterval(updateCounter, 1000);
+  document.addEventListener("visibilitychange", updateCounter);
+
+  /* ======================================================================
+     4. REVELADO PROGRESIVO DE LA CARTA
      ====================================================================== */
 
   let revealObserver = null;
@@ -536,7 +615,7 @@
   }
 
   /* ======================================================================
-     4. SOBRE Y CARTA
+     5. SOBRE Y CARTA
      ====================================================================== */
 
   let letterIsOpen = false;
@@ -688,7 +767,7 @@
   });
 
   /* ======================================================================
-     5. INICIO
+     6. INICIO
      ====================================================================== */
 
   resizeCanvas();

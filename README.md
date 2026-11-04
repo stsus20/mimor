@@ -39,8 +39,9 @@ Todas las rutas son relativas. `index.html` está en la raíz.
 - **Poema original de doce estrofas** sobre los ocho meses, el futuro y las
   estrellas.
 - **Detalles interactivos**: corazones al tocar la galaxia, contador
-  «8 meses de nuestra historia», botón para pausar o reanudar las estrellas,
-  botones para volver al sobre y cierre con `Esc`.
+  «Tiempo contigo» con meses, días, horas, minutos y segundos desde el
+  3 de marzo de 2026, botón para pausar o reanudar las estrellas, botones para
+  volver al sobre y cierre con `Esc`.
 - **Corazón final animado** y despedida romántica.
 - **Accesibilidad**: navegación por teclado, textos alternativos, foco visible y
   respeto por `prefers-reduced-motion`.
@@ -92,6 +93,18 @@ que aparezca con la animación de lectura. Usa `<br>` para separar versos.
   `index.html`.
 - La frase final y la despedida están en `.letter__quote`, `.letter__signoff` y
   `.letter__final`.
+
+### Cambiar la fecha del contador
+
+El contador «Tiempo contigo» toma como inicio el **3 de marzo de 2026**. Para
+cambiar esa fecha, abre `js/script.js` y edita la constante `counterStart`:
+
+```js
+const counterStart = new Date(2026, 2, 3, 0, 0, 0, 0);
+```
+
+Los meses se cuentan por calendario y el resto se muestra en días, horas,
+minutos y segundos. El contador se actualiza cada segundo.
 
 ### Cambiar colores y tipografía
 
