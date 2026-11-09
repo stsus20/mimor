@@ -1,4 +1,4 @@
-# Carta de amor interactiva · 8 meses
+# Carta de amor interactiva 
 
 Una experiencia web íntima y romántica: una galaxia viva, un sobre que se abre
 con delicadeza y una carta escrita para celebrar ocho meses juntos.
