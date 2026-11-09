@@ -3,270 +3,95 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="description" content="Una carta de amor interactiva para celebrar nuestros primeros ocho meses juntos.">
+  <meta name="description" content="Nuestra galaxia de amor interactiva.">
   <meta name="theme-color" content="#050411">
-  <title> · Una carta para ti</title>
+  <title>Nuestra Galaxia de Amor</title>
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath fill='%23d98a9e' d='M16 29S1 19.5 1 9.5C1 4.25 5.25 0 10.5 0 13.1 0 15.3 1.2 16 3.05 16.7 1.2 18.9 0 21.5 0 26.75 0 31 4.25 31 9.5 31 19.5 16 29 16 29Z'/%3E%3C/svg%3E">
+  
+  <!-- Three.js para la galaxia 3D interactiva -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="is-sealed">
+<body>
 
-  <!-- ===================== FONDO: GALAXIA ===================== -->
+  <!-- ===================== FONDO: GALAXIA MEJORADA ===================== -->
   <canvas id="galaxy" aria-hidden="true"></canvas>
 
   <div class="nebula nebula--violet" aria-hidden="true"></div>
   <div class="nebula nebula--rose" aria-hidden="true"></div>
   <div class="nebula nebula--blue" aria-hidden="true"></div>
+  <div class="nebula nebula--cyan" aria-hidden="true"></div>
   <div class="galaxy-band" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
 
   <!-- ===================== CONTROL DE MOVIMIENTO ===================== -->
   <button id="motionToggle" class="motion-toggle" type="button"
-          data-paused="false" aria-label="Pausar estrellas: detener el movimiento de la galaxia">
+          data-paused="false" aria-label="Pausar estrellas">
     <span class="motion-toggle__icon" aria-hidden="true">✦</span>
     <span class="motion-toggle__label">Pausar estrellas</span>
   </button>
 
-  <main>
-    <!-- ===================== PANTALLA: EL SOBRE ===================== -->
-    <section id="envelopeScene" class="scene scene--envelope" aria-label="Sobre con una carta para ti">
-      <div class="envelope-content">
+  <!-- ===================== INTERFAZ PRINCIPAL ===================== -->
+  <main class="galaxy-interface">
+    
+    <!-- Reloj Contador -->
+    <header class="top-bar">
+      <div class="story-counter" role="group" aria-labelledby="counterLabel">
+        <span class="story-counter__label" id="counterLabel">Tiempo juntos</span>
 
-        <header class="intro">
-          <p class="intro__eyebrow">Para ti, mi amor</p>
-          <h1 class="intro__title">Tengo algo para ti...</h1>
-        </header>
-
-        <button id="envelope" class="envelope" type="button"
-                aria-label="Abrir la carta de amor, para ti" aria-expanded="false"
-                aria-controls="letterScene">
-          <span class="envelope__glow" aria-hidden="true"></span>
-
-          <span class="envelope__body" aria-hidden="true">
-            <span class="envelope__back"></span>
-
-            <span class="envelope__letter">
-              <span class="envelope__letter-text">Para ti</span>
-            </span>
-
-            <span class="envelope__front"></span>
-            <span class="envelope__flap"></span>
-
-            <span class="envelope__seal">
-              <svg viewBox="0 0 32 29" focusable="false" aria-hidden="true">
-                <path d="M16 29S1 19.5 1 9.5C1 4.25 5.25 0 10.5 0 13.1 0 15.3 1.2 16 3.05 16.7 1.2 18.9 0 21.5 0 26.75 0 31 4.25 31 9.5 31 19.5 16 29 16 29Z" fill="currentColor"/>
-              </svg>
-            </span>
-
-            <span class="envelope__spark envelope__spark--1">✦</span>
-            <span class="envelope__spark envelope__spark--2">✦</span>
-            <span class="envelope__spark envelope__spark--3">✧</span>
-            <span class="envelope__spark envelope__spark--4">✦</span>
+        <div class="story-counter__units" role="timer">
+          <span class="story-counter__unit">
+            <span class="story-counter__value" id="countMonths">00</span>
+            <span class="story-counter__unit-label">meses</span>
           </span>
-        </button>
-
-        <p class="intro__hint">Haz clic para abrir tu carta</p>
-        <p class="intro__footer"> · una historia que apenas comienza</p>
-
-      </div>
-    </section>
-
-    <!-- ===================== PANTALLA: LA CARTA ===================== -->
-    <section id="letterScene" class="scene scene--letter" aria-label="Carta de amor" hidden>
-
-      <div class="letter-toolbar">
-        <div class="story-counter" role="group" aria-labelledby="counterLabel">
-          <span class="story-counter__label" id="counterLabel">Tiempo contigo<span class="visually-hidden"> desde el 3 de marzo de 2026</span></span>
-
-          <div class="story-counter__units" role="timer" aria-live="off" aria-atomic="true">
-            <span class="story-counter__unit">
-              <span class="story-counter__value" id="countMonths">00</span>
-              <span class="story-counter__unit-label">meses</span>
-            </span>
-            <span class="story-counter__unit">
-              <span class="story-counter__value" id="countDays">00</span>
-              <span class="story-counter__unit-label">días</span>
-            </span>
-            <span class="story-counter__unit">
-              <span class="story-counter__value" id="countHours">00</span>
-              <span class="story-counter__unit-label">horas</span>
-            </span>
-            <span class="story-counter__unit">
-              <span class="story-counter__value" id="countMinutes">00</span>
-              <span class="story-counter__unit-label">minutos</span>
-            </span>
-            <span class="story-counter__unit">
-              <span class="story-counter__value" id="countSeconds">00</span>
-              <span class="story-counter__unit-label">segundos</span>
-            </span>
-          </div>
-        </div>
-
-        <button class="btn-glass js-close-letter" type="button" aria-label="Volver al sobre">
-          <span aria-hidden="true">←</span>
-          <span class="btn-glass__long">Volver al sobre</span>
-          <span class="btn-glass__short">Volver</span>
-        </button>
-      </div>
-
-      <p class="read-hint" id="readHint">
-        <span>Desliza para leer</span>
-        <span class="read-hint__arrow" aria-hidden="true">↓</span>
-      </p>
-
-      <article id="letter" class="letter" tabindex="-1" aria-labelledby="letterTitle">
-        <span class="letter__watermark" aria-hidden="true">8</span>
-
-        <span class="letter__corner letter__corner--tl" aria-hidden="true">✦</span>
-        <span class="letter__corner letter__corner--tr" aria-hidden="true">✦</span>
-        <span class="letter__corner letter__corner--bl" aria-hidden="true">✦</span>
-        <span class="letter__corner letter__corner--br" aria-hidden="true">✦</span>
-
-        <header class="letter__header reveal">
-          <span class="letter__emblem" aria-hidden="true">
-            <svg viewBox="0 0 32 29" focusable="false">
-              <path d="M16 29S1 19.5 1 9.5C1 4.25 5.25 0 10.5 0 13.1 0 15.3 1.2 16 3.05 16.7 1.2 18.9 0 21.5 0 26.75 0 31 4.25 31 9.5 31 19.5 16 29 16 29Z" fill="currentColor"/>
-            </svg>
+          <span class="story-counter__unit">
+            <span class="story-counter__value" id="countDays">00</span>
+            <span class="story-counter__unit-label">días</span>
           </span>
-          <p class="letter__kicker">Ocho meses</p>
-          <h2 class="letter__title" id="letterTitle">A ti, que llegaste<br>como una estrella</h2>
-          <p class="letter__date">Para mi amor, en nuestro octavo mes</p>
-        </header>
-
-        <div class="letter__divider reveal" aria-hidden="true">
-          <span></span>
-          <svg viewBox="0 0 32 29" focusable="false">
-            <path d="M16 29S1 19.5 1 9.5C1 4.25 5.25 0 10.5 0 13.1 0 15.3 1.2 16 3.05 16.7 1.2 18.9 0 21.5 0 26.75 0 31 4.25 31 9.5 31 19.5 16 29 16 29Z" fill="currentColor"/>
-          </svg>
-          <span></span>
-        </div>
-
-        <p class="letter__salutation" id="salutation" aria-label="Mi amor,">
-          <span class="letter__salutation-text"></span>
-        </p>
-
-        <div class="letter__body">
-
-          <p class="stanza reveal">
-            Ocho meses, y aún me sorprende<br>
-            cómo cabe tanto amor en un solo nombre.<br>
-            Antes de ti, mis noches eran mapas sin destino;<br>
-            contigo, hasta el silencio tiene sentido.
-          </p>
-
-          <p class="stanza reveal">
-            No sé en qué instante exacto comenzaste a ser mi hogar.<br>
-            Sé que un día llegaste con tu risa inconfundible<br>
-            y el mundo —que ya estaba— empezó a estar completo.<br>
-            Desde entonces, la felicidad tiene tu forma de mirarme.
-          </p>
-
-          <p class="stanza reveal">
-            Gracias por cada día que elegiste quedarte,<br>
-            por los que han sido fáciles y por los que no.<br>
-            Gracias por tu paciencia cuando soy fastidioso<br>
-            y por tu calma cuando no sé cómo explicarme.
-          </p>
-
-          <p class="stanza reveal">
-            Y gracias por dejarme compartir tu vida,<br>
-            por abrirme la puerta de tus días y tus sueños.<br>
-            No lo digo por costumbre: lo digo porque entiendo<br>
-            que tu confianza es lo más valioso que tengo.
-          </p>
-
-          <p class="stanza reveal">
-            No soy perfecto. Lo sé.<br>
-            A veces me pierdo en mis propios pensamientos<br>
-            y siento que no merezco la constasncia de tu afecto<br>
-            que tú, sin hacer ruido, dejas sobre mi pecho.
-          </p>
-
-          <p class="stanza reveal">
-            Pero quiero que lo sepas, y que lo sepas siempre:<br>
-            jamás daré por sentado lo que tenemos.<br>
-            No es una costumbre tenerte; es un milagro diario,<br>
-            una estrella fugaz que decide, cada noche, volver.
-          </p>
-
-          <p class="stanza reveal">
-            Quiero aprender a amarte mejor:<br>
-            a escucharte con el alma y no solo con los oídos,<br>
-            a cuidar tus silencios, tus miedos y tus sueños,<br>
-            y a crecer sin dejar de sostener tu mano.
-          </p>
-
-          <p class="stanza reveal">
-            Me gustan los días sin nada extraordinario:<br>
-            tu risa en día a día, tu mano entre la mía,<br>
-            las conversaciones que empiezan sin prisa<br>
-            y el silencio que no necesita explicación.
-          </p>
-
-          <p class="stanza reveal">
-            Cada momento contigo tiene un valor que no sé medir,<br>
-            incluso aquellos que parecen pequeños.<br>
-            Los guardo como se guardan las estrellas:<br>
-            sin saber su nombre, pero sabiendo que existen.
-          </p>
-
-          <p class="stanza reveal">
-            Me gusta imaginar los meses que nos faltan:<br>
-            los momentos, las risas, los planes que aún no tienen nombre,<br>
-            los abrazos que todavía no han sucedido<br>
-            y todos los besos que nos deben una historia.
-          </p>
-
-          <p class="stanza reveal">
-            Porque estos ocho meses no son una meta:<br>
-            son el primer capítulo de algo que quiero escribir despacio,<br>
-            con tinta de constancia, con letra de futuro,<br>
-            con la certeza de que a tu lado el tiempo se vuelve hogar.
-          </p>
-
-          <p class="stanza reveal">
-            Ocho meses de nosotros.<br>
-            Ninguno suficiente.<br>
-            Todos necesarios.<br>
-            Y aún nos queda tanto cielo por recorrer.
-          </p>
-
-        </div>
-
-        <blockquote class="letter__quote reveal">
-          «Y si el universo volvería a comenzar, espero que de alguna manera nuestras estrellas vuelvan a encontrarse.»
-        </blockquote>
-
-        <p class="letter__signoff reveal">
-          Con todo mi amor,<br>
-          <span>porque, yo te amo en todos los universos.</span>
-        </p>
-
-        <div class="letter__final reveal">
-          <span class="final-heart" aria-hidden="true">
-            <svg viewBox="0 0 32 29" focusable="false">
-              <path d="M16 29S1 19.5 1 9.5C1 4.25 5.25 0 10.5 0 13.1 0 15.3 1.2 16 3.05 16.7 1.2 18.9 0 21.5 0 26.75 0 31 4.25 31 9.5 31 19.5 16 29 16 29Z" fill="currentColor"/>
-            </svg>
+          <span class="story-counter__unit">
+            <span class="story-counter__value" id="countHours">00</span>
+            <span class="story-counter__unit-label">horas</span>
           </span>
-          <p class="letter__farewell">
-            Te amo tres millones. Gracias por estos ocho meses.<br>
-            Y por todos los que vienen.
-          </p>
-          <p class="letter__stars" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</p>
+          <span class="story-counter__unit">
+            <span class="story-counter__value" id="countMinutes">00</span>
+            <span class="story-counter__unit-label">minutos</span>
+          </span>
+          <span class="story-counter__unit">
+            <span class="story-counter__value" id="countSeconds">00</span>
+            <span class="story-counter__unit-label">segundos</span>
+          </span>
         </div>
-      </article>
-
-      <div class="letter-actions">
-        <button class="btn-soft js-close-letter" type="button">← Volver al sobre</button>
-        <p class="letter-actions__note">Hecho con amor y feliz día de la independencia XD.</p>
       </div>
+    </header>
 
-    </section>
+    <div class="instructions-hint">
+      <span>Mi amor por ti, no cabe en este luagr.</span>
+    </div>
+
+    <!-- Contenedor del Universo 3D -->
+    <div id="canvas-container"></div>
+
+    <!-- Modal emergente para las frases de los planetas / Sol -->
+    <div id="planet-card" class="planet-card hidden">
+      <h3 id="card-title">Planeta</h3>
+      <p id="card-message">Mensaje para mi novia...</p>
+      <button id="card-close" class="btn-glass">Volver a la Galaxia</button>
+    </div>
+
   </main>
 
-  <!-- Corazones que nacen al tocar la galaxia -->
+  <!-- Capa del Easter Egg de Explosión Épica -->
+  <div id="easter-egg-overlay" class="easter-egg-overlay hidden">
+    <div class="explosion-flash"></div>
+    <div class="shockwave"></div>
+    <div class="easter-egg-text">
+      <h2>Yo te amo en todos los universos</h2>
+    </div>
+  </div>
+
+  <!-- Corazones interactivos -->
   <div id="heartsLayer" class="hearts-layer" aria-hidden="true"></div>
 
   <script src="js/script.js"></script>
