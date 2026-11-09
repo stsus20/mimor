@@ -1,488 +1,99 @@
 /* ==========================================================================
-   CARTA DE AMOR — 8 MESES
-   Galaxia animada, sobre interactivo y carta con revelado progresivo.
-   JavaScript vanilla, sin dependencias externas.
+   NUESTRA GALAXIA DE AMOR — INTERACTIVIDAD Y UNIVERSO 3D (VERSIÓN CENTRADA)
    ========================================================================== */
 
 (function () {
   "use strict";
 
-  /* ----------------------------- Referencias ----------------------------- */
-  const html = document.documentElement;
-  const body = document.body;
-
+  /* ----------------------------- 1. GALAXIA DE FONDO ----------------------------- */
   const canvas = document.getElementById("galaxy");
   const ctx = canvas.getContext("2d");
-
   const motionToggle = document.getElementById("motionToggle");
   const motionLabel = motionToggle.querySelector(".motion-toggle__label");
-
-  const envelopeScene = document.getElementById("envelopeScene");
-  const envelope = document.getElementById("envelope");
-  const letterScene = document.getElementById("letterScene");
-  const letter = document.getElementById("letter");
-
-  const salutation = document.getElementById("salutation");
-  const salutationText = salutation.querySelector(".letter__salutation-text");
-
   const heartsLayer = document.getElementById("heartsLayer");
-  const readHint = document.getElementById("readHint");
-  const closeButtons = document.querySelectorAll(".js-close-letter");
-  const revealElements = Array.prototype.slice.call(
-    document.querySelectorAll(".reveal")
-  );
 
-  const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-
-  /* ----------------------------- Utilidades ------------------------------ */
+  let width = 0, height = 0, dpr = 1;
+  let stars = [];
+  let frameId = null, lastFrameTime = 0;
+  let motionOn = true;
+  const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
   const TAU = Math.PI * 2;
 
-  function rand(min, max) {
-    return min + Math.random() * (max - min);
-  }
+  function rand(min, max) { return min + Math.random() * (max - min); }
+  function pick(list) { return list[Math.floor(Math.random() * list.length)]; }
 
-  function pick(list) {
-    return list[Math.floor(Math.random() * list.length)];
-  }
-
-  function after(ms, fn) {
-    return window.setTimeout(fn, ms);
-  }
-
-  /* ======================================================================
-     1. GALAXIA
-     ====================================================================== */
-
-  let width = 0;
-  let height = 0;
-  let dpr = 1;
-
-  let stars = [];
-  let dust = [];
-  let meteors = [];
-
-  let frameId = null;
-  let lastFrameTime = 0;
-  let meteorTimer = 6000;
-
-  let motionOn = !reduceMotionQuery.matches;
-  let userChoseMotion = false;
-
-  const pointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
-  let scrollY = window.scrollY;
-
-  const STAR_HUES = [205, 214, 228, 262, 280, 320, 338, 45];
-
-  /* Crea una estrella dentro de una capa de profundidad. */
-  function createStar(layer) {
-    return {
-      x: Math.random() * width,
-      y: Math.random() * height,
-      radius: rand(layer.size[0], layer.size[1]),
-      alpha: rand(layer.alpha[0], layer.alpha[1]),
-      depth: layer.depth,
-      speed: layer.speed * rand(0.6, 1.4),
-      phase: Math.random() * TAU,
-      twinkle: rand(0.5, 1.5),
-      hue: pick(STAR_HUES),
-      bright: Math.random() > 0.9
-    };
-  }
-
-  /* Genera estrellas y polvo estelar según el tamaño de la pantalla. */
   function buildStarField() {
     const area = width * height;
-    const base = Math.max(80, Math.min(area / 7000, 250));
-
-    const layers = [
-      {
-        depth: 0.35,
-        count: Math.round(base * 0.95),
-        size: [0.4, 1.0],
-        alpha: [0.22, 0.52],
-        speed: 0.004
-      },
-      {
-        depth: 0.65,
-        count: Math.round(base * 0.6),
-        size: [0.7, 1.5],
-        alpha: [0.38, 0.75],
-        speed: 0.008
-      },
-      {
-        depth: 1,
-        count: Math.round(base * 0.35),
-        size: [1.1, 2.2],
-        alpha: [0.6, 0.95],
-        speed: 0.013
-      }
-    ];
-
+    const base = Math.max(120, Math.min(area / 5000, 350));
     stars = [];
-    layers.forEach(function (layer) {
-      for (let i = 0; i < layer.count; i += 1) {
-        stars.push(createStar(layer));
-      }
-    });
-
-    const dustCount = Math.round(Math.max(16, Math.min(area / 26000, 52)));
-    dust = [];
-    for (let i = 0; i < dustCount; i += 1) {
-      dust.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        radius: rand(0.6, 1.8),
-        alpha: rand(0.12, 0.34),
-        vx: rand(-0.006, 0.006),
-        vy: rand(-0.014, -0.003),
-        phase: Math.random() * TAU,
-        hue: pick([210, 280, 330, 340])
+    for (let i = 0; i < base * 2; i++) {
+      stars.push({
+        x: Math.random() * width, y: Math.random() * height,
+        radius: rand(0.5, 2.2), alpha: rand(0.3, 1),
+        depth: rand(0.2, 1), speed: rand(0.005, 0.015),
+        phase: Math.random() * TAU, twinkle: rand(0.6, 1.8),
+        hue: pick([205, 230, 270, 290, 330, 350, 45])
       });
     }
-
-    meteors = [];
   }
 
-  /* Ajusta el lienzo al tamaño real de la ventana. */
   function resizeCanvas() {
     width = window.innerWidth;
     height = window.innerHeight;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    canvas.width = Math.round(width * dpr);
-    canvas.height = Math.round(height * dpr);
-    canvas.style.width = width + "px";
-    canvas.style.height = height + "px";
-
+    canvas.width = width * dpr; canvas.height = height * dpr;
+    canvas.style.width = width + "px"; canvas.style.height = height + "px";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
     buildStarField();
-    drawScene(0, true);
   }
 
-  /* Estrella fugaz ocasional. */
-  function spawnMeteor() {
-    if (meteors.length >= 2) return;
-
-    const fromLeft = Math.random() > 0.35;
-    const speed = rand(0.45, 0.78);
-    const angle = rand(0.28, 0.5);
-
-    meteors.push({
-      x: (fromLeft ? rand(-0.15, 0.35) : rand(0.65, 1.15)) * width,
-      y: rand(-0.1, 0.35) * height,
-      vx: (fromLeft ? 1 : -1) * Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      length: rand(70, 160),
-      life: 0,
-      duration: rand(800, 1500)
-    });
-  }
-
-  /* Dibuja un fotograma completo. */
-  function drawScene(dt, isStatic) {
+  function drawScene(dt) {
     ctx.clearRect(0, 0, width, height);
     ctx.globalCompositeOperation = "lighter";
+    pointer.x += (pointer.targetX - pointer.x) * 0.045;
+    pointer.y += (pointer.targetY - pointer.y) * 0.045;
 
-    if (!isStatic) {
-      pointer.x += (pointer.targetX - pointer.x) * 0.045;
-      pointer.y += (pointer.targetY - pointer.y) * 0.045;
-    }
-
-    const scrollShift = isStatic ? 0 : scrollY * 0.014;
-
-    /* Polvo luminoso lejano */
-    for (let i = 0; i < dust.length; i += 1) {
-      const particle = dust[i];
-
-      if (!isStatic) {
-        particle.x += particle.vx * dt * 0.06;
-        particle.y += particle.vy * dt * 0.06;
-        particle.phase += dt * 0.001;
-
-        if (particle.y < -12) {
-          particle.y = height + 12;
-          particle.x = Math.random() * width;
-        }
-        if (particle.x < -12) particle.x = width + 12;
-        if (particle.x > width + 12) particle.x = -12;
-      }
-
-      const glow = 0.6 + 0.4 * Math.sin(particle.phase);
-      const alpha = particle.alpha * glow;
-
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.radius, 0, TAU);
-      ctx.fillStyle = "hsla(" + particle.hue + ", 90%, 84%, " + alpha + ")";
-      ctx.fill();
-    }
-
-    /* Estrellas con parallax */
-    for (let i = 0; i < stars.length; i += 1) {
+    for (let i = 0; i < stars.length; i++) {
       const star = stars[i];
-
-      if (!isStatic) {
+      if (motionOn) {
         star.y += star.speed * dt * 0.06;
         star.phase += star.twinkle * dt * 0.0012;
-
-        if (star.y > height + 4) {
-          star.y = -4;
-          star.x = Math.random() * width;
-        }
+        if (star.y > height) star.y = 0;
       }
-
-      const twinkle = 0.55 + 0.45 * Math.sin(star.phase);
-      const alpha = star.alpha * twinkle;
-      const offsetX = pointer.x * star.depth * 22;
-      const offsetY = pointer.y * star.depth * 16 + scrollShift * star.depth;
-
-      const x = star.x + offsetX;
-      const y = star.y + offsetY;
-
-      if (star.bright) {
-        ctx.beginPath();
-        ctx.arc(x, y, star.radius * 3.4, 0, TAU);
-        ctx.fillStyle = "hsla(" + star.hue + ", 85%, 84%, " + alpha * 0.12 + ")";
-        ctx.fill();
-      }
-
+      const alpha = star.alpha * (0.5 + 0.5 * Math.sin(star.phase));
       ctx.beginPath();
-      ctx.arc(x, y, star.radius, 0, TAU);
-      ctx.fillStyle = "hsla(" + star.hue + ", 76%, 91%, " + alpha + ")";
+      ctx.arc(star.x + pointer.x * star.depth * 15, star.y + pointer.y * star.depth * 15, star.radius, 0, TAU);
+      ctx.fillStyle = `hsla(${star.hue}, 85%, 88%, ${alpha})`;
       ctx.fill();
     }
-
-    /* Estrellas fugaces */
-    if (!isStatic) {
-      meteorTimer -= dt;
-      if (meteorTimer <= 0) {
-        spawnMeteor();
-        meteorTimer = rand(6500, 15000);
-      }
-    }
-
-    for (let i = meteors.length - 1; i >= 0; i -= 1) {
-      const meteor = meteors[i];
-
-      if (!isStatic) {
-        meteor.x += meteor.vx * dt;
-        meteor.y += meteor.vy * dt;
-        meteor.life += dt;
-      }
-
-      const progress = meteor.life / meteor.duration;
-      if (progress >= 1) {
-        meteors.splice(i, 1);
-        continue;
-      }
-
-      const fade = Math.sin(Math.PI * Math.min(1, progress));
-      const magnitude = Math.hypot(meteor.vx, meteor.vy) || 1;
-      const tailX = meteor.x - (meteor.vx / magnitude) * meteor.length;
-      const tailY = meteor.y - (meteor.vy / magnitude) * meteor.length;
-
-      const gradient = ctx.createLinearGradient(tailX, tailY, meteor.x, meteor.y);
-      gradient.addColorStop(0, "rgba(255, 255, 255, 0)");
-      gradient.addColorStop(0.72, "rgba(233, 179, 194, " + 0.5 * fade + ")");
-      gradient.addColorStop(1, "rgba(255, 250, 252, " + 0.95 * fade + ")");
-
-      ctx.strokeStyle = gradient;
-      ctx.lineWidth = 1.6;
-      ctx.lineCap = "round";
-      ctx.beginPath();
-      ctx.moveTo(tailX, tailY);
-      ctx.lineTo(meteor.x, meteor.y);
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(meteor.x, meteor.y, 1.9, 0, TAU);
-      ctx.fillStyle = "rgba(255, 244, 248, " + fade + ")";
-      ctx.fill();
-    }
-
-    ctx.globalCompositeOperation = "source-over";
   }
 
-  /* Bucle de animación */
   function galaxyLoop(now) {
-    if (!motionOn) {
-      frameId = null;
-      return;
-    }
-
+    if (!motionOn) return;
     const dt = lastFrameTime ? Math.min(now - lastFrameTime, 50) : 16;
     lastFrameTime = now;
-
-    drawScene(dt, false);
-    frameId = window.requestAnimationFrame(galaxyLoop);
+    drawScene(dt);
+    frameId = requestAnimationFrame(galaxyLoop);
   }
 
-  function startGalaxy() {
-    if (frameId !== null) return;
-    lastFrameTime = 0;
-    frameId = window.requestAnimationFrame(galaxyLoop);
-  }
+  window.addEventListener("resize", resizeCanvas);
+  window.addEventListener("pointermove", (e) => {
+    pointer.targetX = (e.clientX / width - 0.5) * 2;
+    pointer.targetY = (e.clientY / height - 0.5) * 2;
+  });
 
-  function stopGalaxy() {
-    if (frameId !== null) {
-      window.cancelAnimationFrame(frameId);
-      frameId = null;
-    }
-  }
-
-  /* Activa o pausa el movimiento (estrellas + animaciones ambientales). */
-  function setMotion(on, fromUser) {
-    motionOn = Boolean(on);
-    if (fromUser) userChoseMotion = true;
-
-    html.dataset.motion = motionOn ? "on" : "off";
-
+  motionToggle.addEventListener("click", () => {
+    motionOn = !motionOn;
     motionToggle.dataset.paused = String(!motionOn);
-    motionToggle.setAttribute(
-      "aria-label",
-      motionOn
-        ? "Pausar estrellas: detener el movimiento de la galaxia"
-        : "Reanudar estrellas: activar el movimiento de la galaxia"
-    );
     motionLabel.textContent = motionOn ? "Pausar estrellas" : "Reanudar estrellas";
-
-    if (motionOn) {
-      meteorTimer = rand(2500, 6000);
-      startGalaxy();
-    } else {
-      stopGalaxy();
-      meteors = [];
-      drawScene(0, true);
-    }
-  }
-
-  /* ------------------------- Eventos de la galaxia ----------------------- */
-  let resizeTimer = null;
-
-  window.addEventListener("resize", function () {
-    window.clearTimeout(resizeTimer);
-    resizeTimer = window.setTimeout(resizeCanvas, 150);
+    if (motionOn) { lastFrameTime = 0; requestAnimationFrame(galaxyLoop); }
   });
 
-  window.addEventListener(
-    "scroll",
-    function () {
-      scrollY = window.scrollY;
-      if (scrollY > 70) {
-        readHint.classList.add("is-hidden");
-      }
-    },
-    { passive: true }
-  );
+  resizeCanvas();
+  requestAnimationFrame(galaxyLoop);
 
-  window.addEventListener(
-    "pointermove",
-    function (event) {
-      pointer.targetX = (event.clientX / width - 0.5) * 2;
-      pointer.targetY = (event.clientY / height - 0.5) * 2;
-    },
-    { passive: true }
-  );
-
-  document.addEventListener("pointerleave", function () {
-    pointer.targetX = 0;
-    pointer.targetY = 0;
-  });
-
-  document.addEventListener("visibilitychange", function () {
-    if (document.hidden) {
-      stopGalaxy();
-    } else if (motionOn) {
-      startGalaxy();
-    }
-  });
-
-  motionToggle.addEventListener("click", function () {
-    setMotion(!motionOn, true);
-  });
-
-  function onReducedMotionChange(event) {
-    if (!userChoseMotion) {
-      setMotion(!event.matches, false);
-    }
-  }
-
-  if (typeof reduceMotionQuery.addEventListener === "function") {
-    reduceMotionQuery.addEventListener("change", onReducedMotionChange);
-  } else if (typeof reduceMotionQuery.addListener === "function") {
-    reduceMotionQuery.addListener(onReducedMotionChange);
-  }
-
-  /* ======================================================================
-     2. CORAZONES
-     ====================================================================== */
-
-  function createHeart(x, y, options) {
-    const config = options || {};
-    const heart = document.createElement("span");
-
-    heart.className = "heart-pop";
-    heart.textContent = "♥";
-    heart.style.left = x + "px";
-    heart.style.top = y + "px";
-    heart.style.setProperty("--dx", (config.dx || 0) + "px");
-    heart.style.setProperty("--dy", (config.dy || -100) + "px");
-    heart.style.setProperty("--size", (config.size || 16) + "px");
-    heart.style.setProperty("--rot", rand(-30, 30).toFixed(1) + "deg");
-    heart.style.color = pick(["#e79ab0", "#f0b7c6", "#d98a9e", "#f3d3b0"]);
-    heart.style.animationDuration = (config.duration || 1600) + "ms";
-
-    heartsLayer.appendChild(heart);
-
-    const removeHeart = function () {
-      if (heart.parentNode) heart.parentNode.removeChild(heart);
-    };
-
-    heart.addEventListener("animationend", removeHeart, { once: true });
-    after(2600, removeHeart);
-  }
-
-  /* Explosión suave de corazones al abrir el sobre. */
-  function burstHearts(x, y, count) {
-    const total = count || 9;
-
-    for (let i = 0; i < total; i += 1) {
-      const angle = (TAU * i) / total + rand(-0.35, 0.35);
-      const distance = rand(42, 115);
-
-      createHeart(x + Math.cos(angle) * 14, y + Math.sin(angle) * 10, {
-        dx: Math.cos(angle) * distance,
-        dy: Math.sin(angle) * distance - 46,
-        size: rand(10, 22),
-        duration: rand(1100, 1900)
-      });
-    }
-  }
-
-  document.addEventListener("click", function (event) {
-    const target = event.target;
-
-    if (
-      target.closest(
-        "button, a, input, textarea, select, .letter, .letter-actions"
-      )
-    ) {
-      return;
-    }
-
-    createHeart(event.clientX, event.clientY, {
-      dx: rand(-36, 36),
-      dy: -rand(80, 135),
-      size: rand(12, 24),
-      duration: rand(1200, 1900)
-    });
-  });
-
-  /* ======================================================================
-     3. CONTADOR DE TIEMPO
-     ====================================================================== */
-
-  const counterStart = new Date(2026, 2, 3, 0, 0, 0, 0);
+  /* ----------------------------- 2. CONTADOR DE TIEMPO ----------------------------- */
+  const counterStart = new Date(2026, 2, 3, 0, 0, 0); // 3 de marzo de 2026
   const counterValues = {
     months: document.getElementById("countMonths"),
     days: document.getElementById("countDays"),
@@ -491,285 +102,359 @@
     seconds: document.getElementById("countSeconds")
   };
 
-  function padCounter(value) {
-    return String(value).padStart(2, "0");
-  }
-
-  function addMonths(date, amount) {
-    const result = new Date(date.getTime());
-    const day = result.getDate();
-
-    result.setDate(1);
-    result.setMonth(result.getMonth() + amount);
-
-    const lastDay = new Date(
-      result.getFullYear(),
-      result.getMonth() + 1,
-      0
-    ).getDate();
-
-    result.setDate(Math.min(day, lastDay));
-    return result;
-  }
-
-  function calendarDaysBetween(from, to) {
-    const fromUTC = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
-    const toUTC = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
-
-    return Math.floor((toUTC - fromUTC) / 86400000);
-  }
-
-  function getElapsedTime(now) {
-    if (now <= counterStart) {
-      return { months: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
-    }
-
-    let months =
-      (now.getFullYear() - counterStart.getFullYear()) * 12 +
-      (now.getMonth() - counterStart.getMonth());
-    let anchor = addMonths(counterStart, months);
-
-    if (anchor > now) {
-      months -= 1;
-      anchor = addMonths(counterStart, months);
-    }
-
-    return {
-      months: months,
-      days: calendarDaysBetween(anchor, now),
-      hours: now.getHours(),
-      minutes: now.getMinutes(),
-      seconds: now.getSeconds()
-    };
-  }
-
   function updateCounter() {
-    const elapsed = getElapsedTime(new Date());
+    const now = new Date();
+    let diff = Math.max(0, now - counterStart);
 
-    counterValues.months.textContent = padCounter(elapsed.months);
-    counterValues.days.textContent = padCounter(elapsed.days);
-    counterValues.hours.textContent = padCounter(elapsed.hours);
-    counterValues.minutes.textContent = padCounter(elapsed.minutes);
-    counterValues.seconds.textContent = padCounter(elapsed.seconds);
+    const seconds = Math.floor((diff / 1000) % 60);
+    const minutes = Math.floor((diff / 1000 / 60) % 60);
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    
+    let months = (now.getFullYear() - counterStart.getFullYear()) * 12 + (now.getMonth() - counterStart.getMonth());
+    if (now.getDate() < counterStart.getDate()) months--;
+    
+    const tempDate = new Date(counterStart);
+    tempDate.setMonth(tempDate.getMonth() + Math.max(0, months));
+    const days = Math.floor((now - tempDate) / (1000 * 60 * 60 * 24));
+
+    counterValues.months.textContent = String(Math.max(0, months)).padStart(2, "0");
+    counterValues.days.textContent = String(Math.max(0, days)).padStart(2, "0");
+    counterValues.hours.textContent = String(hours).padStart(2, "0");
+    counterValues.minutes.textContent = String(minutes).padStart(2, "0");
+    counterValues.seconds.textContent = String(seconds).padStart(2, "0");
   }
 
+  setInterval(updateCounter, 1000);
   updateCounter();
-  window.setInterval(updateCounter, 1000);
-  document.addEventListener("visibilitychange", updateCounter);
 
-  /* ======================================================================
-     4. REVELADO PROGRESIVO DE LA CARTA
-     ====================================================================== */
+  /* ----------------------------- 3. UNIVERSO 3D  ----------------------------- */
+  const container = document.getElementById("canvas-container");
+  const planetCard = document.getElementById("planet-card");
+  const cardTitle = document.getElementById("card-title");
+  const cardMessage = document.getElementById("card-message");
+  const cardClose = document.getElementById("card-close");
 
-  let revealObserver = null;
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-  function revealElement(element) {
-    const index = Number(element.dataset.revealIndex || 0);
-
-    element.style.transitionDelay = Math.min(index, 4) * 85 + "ms";
-    element.classList.add("is-visible");
-    if (revealObserver) revealObserver.unobserve(element);
+  // Función para adaptar el zoom y centrar la cámara según la pantalla
+  function updateCameraPosition() {
+    const isMobile = window.innerWidth < 768;
+    const distance = isMobile ? 65 : 45;
+    camera.position.set(0, 0, distance); // Directamente frente al origen para un centrado exacto
+    camera.lookAt(0, 0, 0);
   }
+  updateCameraPosition();
 
-  if ("IntersectionObserver" in window) {
-    revealObserver = new IntersectionObserver(
-      function (entries) {
-        entries.forEach(function (entry) {
-          if (entry.isIntersecting) revealElement(entry.target);
-        });
-      },
-      { threshold: 0.12, rootMargin: "0px 0px -5% 0px" }
-    );
-  }
+  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
 
-  revealElements.forEach(function (element, index) {
-    element.dataset.revealIndex = String(index);
+  // Iluminación
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(ambientLight);
+
+  const sunLight = new THREE.PointLight(0xffeedd, 3, 300);
+  scene.add(sunLight);
+
+  // Grupo principal del sistema solar (Centrado en (0,0,0))
+  const solarSystem = new THREE.Group();
+  solarSystem.position.set(0, 0, 0);
+  solarSystem.rotation.x = 0.35; // Ligera inclinación estética de las órbitas
+  scene.add(solarSystem);
+
+  // Sol
+  const sunGeo = new THREE.SphereGeometry(3.5, 32, 32);
+  const sunMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+  const sun = new THREE.Mesh(sunGeo, sunMat);
+  sun.userData = { name: "El Sol", message: "Te amo tres millones" };
+  solarSystem.add(sun);
+
+  // Brillo del Sol
+  const glowGeo = new THREE.SphereGeometry(4.0, 32, 32);
+  const glowMat = new THREE.MeshBasicMaterial({ color: 0xff4500, transparent: true, opacity: 0.4 });
+  sun.add(new THREE.Mesh(glowGeo, glowMat));
+
+  // Planetas
+  const planetData = [
+    { name: "Mercurio", size: 0.45, dist: 6.5, color: 0xa6a6a6, speed: 0.03, message: "Tu eres mi camino y siempre vas a ser mi camino." },
+    { name: "Venus", size: 0.75, dist: 9.5, color: 0xe3bb76, speed: 0.02, message: "Tengo que proteger lo unico que le da sentido a mi vida, esa eres tu ." },
+    { name: "Tierra", size: 0.85, dist: 13, color: 0x4b9cd3, speed: 0.015, message: "En todo el planeta, jamás encontraría a alguien tan maravillosa como tú." },
+    { name: "Marte", size: 0.65, dist: 16.5, color: 0xc1440e, speed: 0.012, message: "Tus locuras van con mis locuras." },
+    { name: "Júpiter", size: 1.7, dist: 21.5, color: 0xd8ca9d, speed: 0.008, message: "Eres mi tristeza y mi esperanza pero sobre todo, eres mi amor." },
+    { name: "Saturno", size: 1.3, dist: 26.5, color: 0xead6b8, speed: 0.006, ring: true, message: "Tu me volviste digno." },
+    { name: "Urano", size: 1.0, dist: 31, color: 0xafeeee, speed: 0.004, message: "Haces que mi mundo sea único, mágico y completamente especial." },
+    { name: "Neptuno", size: 0.95, dist: 35, color: 0x4682b4, speed: 0.003, message: "Hasta el rincón más lejano del universo, te elegiría una y otra vez." }
+  ];
+
+  const planets = [];
+
+  planetData.forEach((data) => {
+    // Órbita
+    const orbitGeo = new THREE.RingGeometry(data.dist - 0.06, data.dist + 0.06, 64);
+    const orbitMat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.1 });
+    const orbit = new THREE.Mesh(orbitGeo, orbitMat);
+    orbit.rotation.x = Math.PI / 2;
+    solarSystem.add(orbit);
+
+    // Pivot para la rotación del planeta
+    const pivot = new THREE.Group();
+    solarSystem.add(pivot);
+
+    // Malla del Planeta
+    const geo = new THREE.SphereGeometry(data.size, 32, 32);
+    const mat = new THREE.MeshStandardMaterial({ color: data.color, roughness: 0.7 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.x = data.dist;
+    mesh.userData = { name: data.name, message: data.message };
+    pivot.add(mesh);
+
+    if (data.ring) {
+      const ringGeo = new THREE.RingGeometry(data.size + 0.4, data.size + 1.2, 32);
+      const ringMat = new THREE.MeshBasicMaterial({ color: 0xc2b193, side: THREE.DoubleSide, transparent: true, opacity: 0.6 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      ring.rotation.x = Math.PI / 2;
+      mesh.add(ring);
+    }
+
+    planets.push({ mesh, pivot, speed: data.speed });
   });
 
-  function resetReveals() {
-    revealElements.forEach(function (element) {
-      if (revealObserver) revealObserver.unobserve(element);
-      element.classList.remove("is-visible");
-      element.style.transitionDelay = "";
-    });
-  }
+  // Easter Egg: Asteroide
+  const asteroidGeo = new THREE.DodecahedronGeometry(0.5, 1);
+  const asteroidMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.8 });
+  const asteroid = new THREE.Mesh(asteroidGeo, asteroidMat);
+  asteroid.position.set(18, 4, -18);
+  asteroid.userData = { name: "Asteroide", isAsteroid: true };
+  solarSystem.add(asteroid);
 
-  function observeReveals() {
-    if (!revealObserver) {
-      revealElements.forEach(revealElement);
-      return;
-    }
+  // Sistema de partículas de explosión 3D
+  const particleCount = 200;
+  const particleGeo = new THREE.BufferGeometry();
+  const particlePositions = new Float32Array(particleCount * 3);
+  const particleVelocities = [];
 
-    revealElements.forEach(function (element) {
-      revealObserver.observe(element);
-    });
-
-    /* Refuerzo para navegadores que retrasan el observer en segundo plano:
-       lo que ya está en pantalla se muestra de inmediato. */
-    revealElements.forEach(function (element) {
-      const rect = element.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 0.92 && rect.bottom > 0) {
-        revealElement(element);
-      }
-    });
-  }
-
-  /* ======================================================================
-     5. SOBRE Y CARTA
-     ====================================================================== */
-
-  let letterIsOpen = false;
-  let interactionBusy = false;
-  let typingTimer = null;
-
-  /* Escribe "Mi amor," letra a letra. */
-  function typeSalutation() {
-    const text = "Mi amor,";
-
-    stopTyping();
-    salutation.classList.remove("is-done");
-    salutationText.textContent = "";
-
-    if (!motionOn) {
-      salutationText.textContent = text;
-      salutation.classList.add("is-done");
-      return;
-    }
-
-    let index = 0;
-
-    typingTimer = window.setInterval(function () {
-      index += 1;
-      salutationText.textContent = text.slice(0, index);
-
-      if (index >= text.length) {
-        stopTyping();
-        after(450, function () {
-          salutation.classList.add("is-done");
-        });
-      }
-    }, 85);
-  }
-
-  function stopTyping() {
-    if (typingTimer !== null) {
-      window.clearInterval(typingTimer);
-      typingTimer = null;
-    }
-  }
-
-  function resetSalutation() {
-    stopTyping();
-    salutation.classList.remove("is-done");
-    salutationText.textContent = "";
-  }
-
-  /* Abre la carta: sobre -> animación -> lectura. */
-  function openLetter() {
-    if (letterIsOpen || interactionBusy) return;
-
-    interactionBusy = true;
-    letterIsOpen = true;
-    body.classList.add("is-reading");
-
-    const rect = envelope.getBoundingClientRect();
-    burstHearts(
-      rect.left + rect.width / 2,
-      rect.top + rect.height * 0.48,
-      10
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    particlePositions[i] = 0;
+    particlePositions[i + 1] = 0;
+    particlePositions[i + 2] = 0;
+    particleVelocities.push(
+      new THREE.Vector3(
+        (Math.random() - 0.5) * 1.5,
+        (Math.random() - 0.5) * 1.5,
+        (Math.random() - 0.5) * 1.5
+      )
     );
-
-    envelope.classList.add("is-open");
-    envelope.setAttribute("aria-expanded", "true");
-    envelopeScene.classList.add("is-opening");
-
-    letterScene.hidden = false;
-    body.classList.remove("is-sealed");
-    window.scrollTo(0, 0);
-
-    resetReveals();
-    resetSalutation();
-    readHint.classList.remove("is-hidden");
-
-    after(40, function () {
-      letterScene.classList.add("is-active");
-    });
-
-    after(1050, function () {
-      envelopeScene.classList.add("is-gone");
-    });
-
-    after(2100, function () {
-      envelopeScene.hidden = true;
-      envelopeScene.setAttribute("aria-hidden", "true");
-    });
-
-    after(750, function () {
-      observeReveals();
-      typeSalutation();
-      letter.focus({ preventScroll: true });
-    });
-
-    after(2250, function () {
-      interactionBusy = false;
-    });
   }
 
-  /* Cierra la carta y regresa al sobre. */
-  function closeLetter() {
-    if (!letterIsOpen || interactionBusy) return;
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+  const particleMat = new THREE.PointsMaterial({
+    color: 0xff7675,
+    size: 0.6,
+    transparent: true,
+    opacity: 0
+  });
+  const explosionParticles = new THREE.Points(particleGeo, particleMat);
+  solarSystem.add(explosionParticles);
 
-    interactionBusy = true;
-    letterIsOpen = false;
+  // Control manual de rotación 360°
+  let isDragging = false;
+  let previousMousePosition = { x: 0, y: 0 };
+  let cameraTargetPosition = null;
+  let isZoomed = false;
 
-    letterScene.classList.remove("is-active");
-    stopTyping();
+  container.addEventListener("pointerdown", (e) => {
+    isDragging = true;
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  });
 
-    after(450, function () {
-      letterScene.hidden = true;
-      resetReveals();
-      resetSalutation();
+  window.addEventListener("pointermove", (e) => {
+    if (!isDragging || isZoomed) return;
+    const deltaX = e.clientX - previousMousePosition.x;
+    const deltaY = e.clientY - previousMousePosition.y;
 
-      window.scrollTo(0, 0);
-      body.classList.add("is-sealed");
-      body.classList.remove("is-reading");
+    solarSystem.rotation.y += deltaX * 0.005;
+    solarSystem.rotation.x += deltaY * 0.005;
 
-      envelopeScene.hidden = false;
-      envelopeScene.removeAttribute("aria-hidden");
+    previousMousePosition = { x: e.clientX, y: e.clientY };
+  });
 
-      envelope.classList.remove("is-open");
-      envelope.setAttribute("aria-expanded", "false");
+  window.addEventListener("pointerup", () => { isDragging = false; });
 
-      /* Fuerza un reflow para que la aparición se anime de nuevo. */
-      void envelopeScene.offsetWidth;
+  // Animación continua
+  let isExploding = false;
 
-      after(30, function () {
-        envelopeScene.classList.remove("is-gone", "is-opening");
+  function animateSystem() {
+    requestAnimationFrame(animateSystem);
+
+    if (motionOn && !isZoomed) {
+      solarSystem.rotation.y += 0.0015;
+
+      planets.forEach((p) => {
+        p.pivot.rotation.y += p.speed * 0.5;
+        p.mesh.rotation.y += 0.01;
       });
-    });
 
-    after(1400, function () {
-      interactionBusy = false;
-      envelope.focus({ preventScroll: true });
-    });
+      asteroid.rotation.x += 0.01;
+      asteroid.rotation.y += 0.01;
+    }
+
+    // Animación de partículas de explosión 3D
+    if (isExploding) {
+      const positions = explosionParticles.geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] += particleVelocities[i].x;
+        positions[i * 3 + 1] += particleVelocities[i].y;
+        positions[i * 3 + 2] += particleVelocities[i].z;
+      }
+      explosionParticles.geometry.attributes.position.needsUpdate = true;
+    }
+
+    // Suavizado de cámara al hacer zoom
+    if (cameraTargetPosition) {
+      camera.position.lerp(cameraTargetPosition, 0.05);
+      if (camera.position.distanceTo(cameraTargetPosition) < 0.2) {
+        cameraTargetPosition = null;
+      }
+    }
+
+    renderer.render(scene, camera);
   }
+  animateSystem();
 
-  envelope.addEventListener("click", openLetter);
+  // Raycasting para clics en objetos 3D
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
 
-  closeButtons.forEach(function (button) {
-    button.addEventListener("click", closeLetter);
-  });
+  container.addEventListener("click", (e) => {
+    if (isZoomed || isColliding) return;
 
-  document.addEventListener("keydown", function (event) {
-    if (event.key === "Escape" && letterIsOpen) {
-      closeLetter();
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects([sun, asteroid, ...planets.map(p => p.mesh)]);
+
+    if (intersects.length > 0) {
+      const obj = intersects[0].object;
+
+      if (obj.userData.isAsteroid) {
+        triggerAsteroidEasterEgg();
+      } else if (obj.userData.name) {
+        openCard(obj);
+      }
+    } else {
+      createHeart(e.clientX, e.clientY);
     }
   });
 
-  /* ======================================================================
-     6. INICIO
-     ====================================================================== */
+  function openCard(obj) {
+    isZoomed = true;
+    cardTitle.textContent = obj.userData.name;
+    cardMessage.textContent = obj.userData.message;
+    planetCard.classList.remove("hidden");
 
-  resizeCanvas();
-  setMotion(motionOn, false);
+    const worldPos = new THREE.Vector3();
+    obj.getWorldPosition(worldPos);
+    cameraTargetPosition = new THREE.Vector3(worldPos.x, worldPos.y + 1, worldPos.z + 7);
+  }
+
+  function resetCameraPosition() {
+    const isMobile = window.innerWidth < 768;
+    cameraTargetPosition = new THREE.Vector3(0, 0, isMobile ? 65 : 45);
+  }
+
+  cardClose.addEventListener("click", () => {
+    planetCard.classList.add("hidden");
+    resetCameraPosition();
+    setTimeout(() => { isZoomed = false; }, 800);
+  });
+
+  /* ----------------------------- 4. EASTER EGG ASTEROIDE MEJORADO ----------------------------- */
+  const easterEggOverlay = document.getElementById("easter-egg-overlay");
+  const flash = easterEggOverlay.querySelector(".explosion-flash");
+  let isColliding = false;
+
+  function triggerAsteroidEasterEgg() {
+    if (isColliding) return;
+    isColliding = true;
+    planetCard.classList.add("hidden");
+
+    const startTime = performance.now();
+    const startPos = asteroid.position.clone();
+    const targetPos = new THREE.Vector3(0, 0, 0);
+
+    function animateCollision(now) {
+      const elapsed = (now - startTime) / 1000;
+      const progress = Math.min(elapsed / 1.2, 1);
+
+      asteroid.position.lerpVectors(startPos, targetPos, progress);
+
+      if (progress < 1) {
+        requestAnimationFrame(animateCollision);
+      } else {
+        // Impacto 3D
+        isExploding = true;
+        particleMat.opacity = 1;
+
+        easterEggOverlay.classList.remove("hidden");
+        setTimeout(() => easterEggOverlay.classList.add("active"), 50);
+
+        flash.style.opacity = "1";
+        flash.style.transition = "opacity 0.2s ease";
+
+        setTimeout(() => {
+          flash.style.transition = "opacity 3.5s ease";
+          flash.style.opacity = "0.95";
+          easterEggOverlay.classList.add("show-text");
+        }, 300);
+
+        // Reset después de 5.5 segundos
+        setTimeout(() => {
+          easterEggOverlay.classList.remove("show-text", "active");
+          setTimeout(() => {
+            easterEggOverlay.classList.add("hidden");
+            flash.style.opacity = "0";
+            asteroid.position.set(18, 4, -18);
+            
+            // Reset de partículas
+            isExploding = false;
+            particleMat.opacity = 0;
+            const positions = explosionParticles.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount * 3; i++) positions[i] = 0;
+            explosionParticles.geometry.attributes.position.needsUpdate = true;
+
+            isColliding = false;
+            isZoomed = false;
+            resetCameraPosition();
+          }, 1000);
+        }, 5500);
+      }
+    }
+    requestAnimationFrame(animateCollision);
+  }
+
+  /* ----------------------------- 5. CORAZONES AL CLIC ----------------------------- */
+  function createHeart(x, y) {
+    const heart = document.createElement("span");
+    heart.className = "heart-pop";
+    heart.textContent = "♥";
+    heart.style.left = x + "px";
+    heart.style.top = y + "px";
+    heart.style.setProperty("--dx", rand(-40, 40) + "px");
+    heart.style.setProperty("--dy", -rand(80, 140) + "px");
+    heart.style.setProperty("--size", rand(14, 24) + "px");
+    heart.style.setProperty("--rot", rand(-30, 30) + "deg");
+    heartsLayer.appendChild(heart);
+    setTimeout(() => heart.remove(), 1600);
+  }
+
+  // Ajuste al cambiar tamaño de pantalla
+  window.addEventListener("resize", () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    updateCameraPosition();
+  });
 })();
